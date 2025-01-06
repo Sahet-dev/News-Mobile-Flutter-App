@@ -4,16 +4,16 @@ import 'news_feed_screen.dart';
 
 class SplashScreen extends StatelessWidget {
   @override
-  Widget build(BuildContext context) {
-    // Navigate to NewsFeedScreen after 3 seconds
-    Timer(Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => NewsFeedScreen()),
-      );
-    });
+    Widget build(BuildContext context) {
+      // Navigate to NewsFeedScreen after 3 seconds
+      Timer(Duration(seconds: 3), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => NewsFeedScreen()),
+        );
+      });
 
-    return Scaffold(
+      return Scaffold(
       backgroundColor: const Color(0xFF4f86f7),
       body: Center(
         child: Text(
