@@ -10,8 +10,9 @@ class DailyNewsApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Daily News',
+      title: 'Döwür News',
       theme: ThemeData(
+        fontFamily: 'NotoSans',
         primarySwatch: Colors.blue,
       ),
       home: SplashScreen(),

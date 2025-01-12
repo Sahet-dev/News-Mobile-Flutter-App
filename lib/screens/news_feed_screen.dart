@@ -6,6 +6,17 @@ import '../widgets/category_selector.dart';
 import '../widgets/news_card.dart';
 import '../models/news_article.dart';
 import 'news_detail_screen.dart';
+import 'package:intl/intl.dart';
+
+String formatDate(String isoDate) {
+  try {
+    DateTime dateTime = DateTime.parse(isoDate);
+    return DateFormat('dd MMM yyyy, hh:mm a').format(dateTime);
+  } catch (e) {
+    return isoDate;
+  }
+}
+
 
 class NewsFeedScreen extends StatefulWidget {
   @override
@@ -14,7 +25,7 @@ class NewsFeedScreen extends StatefulWidget {
 
 class _NewsFeedScreenState extends State<NewsFeedScreen> {
   final List<String> categories = ["World", "Tech", "Sports", "Health", "Entertainment"];
-  String? selectedCategory; // Initially no category selected
+  String? selectedCategory;
 
   List<NewsArticle> newsArticles = [];
 
@@ -26,7 +37,10 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
       final response = await http.get(Uri.parse('http://localhost:8080/api/news/all'));
 
       if (response.statusCode == 200) {
-        List jsonResponse = json.decode(response.body);
+        // Explicitly decode the response body as UTF-8
+        String decodedBody = utf8.decode(response.bodyBytes);
+        List jsonResponse = json.decode(decodedBody);
+
         print("API Response: $jsonResponse");
 
         // Retrieve cached articles
@@ -95,7 +109,7 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
 
 
 
-  // Filter articles based on the selected category
+
   List<NewsArticle> get filteredArticles {
     return selectedCategory == null
         ? newsArticles
@@ -125,7 +139,7 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daily News'),
+        title: const Text('Döwür News'),
         centerTitle: true,
         backgroundColor: const Color(0xFF4f86f7),
       ),
@@ -161,20 +175,16 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
   return NewsCard(
   title: article.title,
   image: article.imageUrl,
-  timestamp: article.publishedAt,
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => NewsDetailScreen(
-          title: article.title,
-          image: article.imageUrl,
+  timestamp: formatDate(article.publishedAt),
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => NewsDetailScreen(articleId: article.id),
         ),
-      ),
-    );
-  },
-);
-
+      );
+    },
+  );
 },
 
 

@@ -17,7 +17,7 @@ class SplashScreen extends StatelessWidget {
       backgroundColor: const Color(0xFF4f86f7),
       body: Center(
         child: Text(
-          'Daily News',
+          'Döwür News',
           style: TextStyle(
             fontSize: 30,
             color: Colors.white,
