@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../constants.dart';
 import '../models/news_article.dart';
 
 class NewsDetailScreen extends StatefulWidget {
@@ -16,6 +18,22 @@ class NewsDetailScreen extends StatefulWidget {
 class NewsDetailScreenState extends State<NewsDetailScreen> {
   NewsArticle? article;
   bool isLoading = true;
+
+  late BannerAd _bannerAd;
+  bool _isAdLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchArticle(widget.articleId);
+    _loadBannerAd();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd.dispose();
+    super.dispose();
+  }
 
   Future<void> fetchArticle(int id) async {
     final prefs = await SharedPreferences.getInstance();
@@ -39,7 +57,7 @@ class NewsDetailScreenState extends State<NewsDetailScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:8080/api/news/$id'),
+        Uri.parse('${ApiConstants.baseUrl}/api/news/$id'),
       );
 
       if (response.statusCode == 200) {
@@ -64,10 +82,24 @@ class NewsDetailScreenState extends State<NewsDetailScreen> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    fetchArticle(widget.articleId);
+  void _loadBannerAd() {
+    _bannerAd = BannerAd(
+      // adUnitId: 'ca-app-pub-1638187422634927/1211333876', // Valid ad unit ID
+      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // Test ad unit ID
+      size: AdSize.banner,
+      request: AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          setState(() {
+            _isAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          debugPrint('Ad failed to load: $error');
+          ad.dispose();
+        },
+      ),
+    )..load();
   }
 
   @override
@@ -84,9 +116,21 @@ class NewsDetailScreenState extends State<NewsDetailScreen> {
         ),
         backgroundColor: const Color(0xFF4f86f7),
       ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _buildBody(),
+      body: Column(
+        children: [
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _buildBody(),
+            ),
+          ),
+          if (_isAdLoaded)
+            Container(
+              height: _bannerAd.size.height.toDouble(),
+              width: _bannerAd.size.width.toDouble(),
+              child: AdWidget(ad: _bannerAd),
+            ),
+        ],
       ),
     );
   }

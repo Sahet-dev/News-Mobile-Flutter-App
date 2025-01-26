@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants.dart';
 import '../widgets/category_selector.dart';
 import '../widgets/news_card.dart';
 import '../models/news_article.dart';
 import 'news_detail_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 String formatDate(String isoDate) {
   try {
@@ -26,6 +28,8 @@ class NewsFeedScreen extends StatefulWidget {
 class _NewsFeedScreenState extends State<NewsFeedScreen> {
   final List<String> categories = ["World", "Tech", "Sports", "Health", "Entertainment"];
   String? selectedCategory;
+  late BannerAd _bannerAd;
+  bool _isAdLoaded = false;
 
   List<NewsArticle> newsArticles = [];
 
@@ -34,7 +38,7 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
 
   Future<void> fetchNewsArticles() async {
     try {
-      final response = await http.get(Uri.parse('http://localhost:8080/api/news/all'));
+      final response = await http.get(Uri.parse('${ApiConstants.baseUrl}/api/news/all'));
 
       if (response.statusCode == 200) {
         // Explicitly decode the response body as UTF-8
@@ -133,6 +137,30 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
     super.initState();
     fetchNewsArticles();
     checkCachedArticles();
+    _bannerAd = BannerAd(
+      // adUnitId: 'ca-app-pub-1638187422634927/1211333876',
+      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // Test ad unit ID
+
+      size: AdSize.banner,
+      request: AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          setState(() {
+            _isAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          print('Ad failed to load: $error');
+          ad.dispose();
+        },
+      ),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd.dispose();
+    super.dispose();
   }
 
   @override
@@ -145,21 +173,24 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
       ),
       body: Column(
         children: [
-          // Categories Row
-          CategorySelector(
-            categories: categories,
-            selectedCategory: selectedCategory,
-            onCategorySelected: (category) {
-              setState(() {
-                selectedCategory = category;
-              });
-            },
-          ),
-          const SizedBox(height: 10),
-          // News Cards
           Expanded(
-            child: filteredArticles.isEmpty
-                ? Center(
+            child: Column(
+              children: [
+                // Categories Row
+                CategorySelector(
+                  categories: categories,
+                  selectedCategory: selectedCategory,
+                  onCategorySelected: (category) {
+                    setState(() {
+                      selectedCategory = category;
+                    });
+                  },
+                ),
+                const SizedBox(height: 10),
+                // News Cards
+                Expanded(
+                  child: filteredArticles.isEmpty
+                      ? Center(
                     child: Text(
                       selectedCategory == null
                           ? "Loading articles..."
@@ -167,31 +198,41 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   )
-                : ListView.builder(
+                      : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     itemCount: filteredArticles.length,
                     itemBuilder: (context, index) {
-  final article = filteredArticles[index];
-  return NewsCard(
-  title: article.title,
-  image: article.imageUrl,
-  timestamp: formatDate(article.publishedAt),
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => NewsDetailScreen(articleId: article.id),
-        ),
-      );
-    },
-  );
-},
-
-
+                      final article = filteredArticles[index];
+                      return NewsCard(
+                        title: article.title,
+                        image: article.imageUrl,
+                        timestamp: formatDate(article.publishedAt),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NewsDetailScreen(
+                                articleId: article.id,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
+                ),
+              ],
+            ),
           ),
+          if (_isAdLoaded)
+            Container(
+              height: _bannerAd.size.height.toDouble(),
+              width: _bannerAd.size.width.toDouble(),
+              child: AdWidget(ad: _bannerAd),
+            ),
         ],
       ),
     );
   }
+
 }

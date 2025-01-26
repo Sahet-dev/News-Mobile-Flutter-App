@@ -3,6 +3,10 @@
         android:label="daily_news_app"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <meta-data
+                android:name="com.google.android.gms.ads.APPLICATION_ID"
+                android:value="ca-app-pub-1638187422634927/1211333876"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
